@@ -940,3 +940,26 @@ func TestOAuthHandler_GetServerMetadata_FallbackToDefaultEndpoints(t *testing.T)
 		t.Errorf("Expected token endpoint to be %s/token, got %s", server.URL, metadata.TokenEndpoint)
 	}
 }
+
+func TestNewOAuthHandler_WithOAuthHTTPClient(t *testing.T) {
+	// Custom client with unique timeout
+	customClient := &http.Client{Timeout: 123 * time.Second}
+
+	// Handler with custom client
+	handlerWithCustom := NewOAuthHandler(OAuthConfig{}, WithOAuthHTTPClient(customClient))
+	if handlerWithCustom.httpClient != customClient {
+		t.Errorf("Expected custom http.Client to be set via WithOAuthHTTPClient")
+	}
+	if handlerWithCustom.httpClient.Timeout != 123*time.Second {
+		t.Errorf("Expected custom http.Client timeout to be 123s, got %v", handlerWithCustom.httpClient.Timeout)
+	}
+
+	// Handler with default client
+	handlerDefault := NewOAuthHandler(OAuthConfig{})
+	if handlerDefault.httpClient == nil {
+		t.Errorf("Expected default http.Client to be set")
+	}
+	if handlerDefault.httpClient.Timeout != 30*time.Second {
+		t.Errorf("Expected default http.Client timeout to be 30s, got %v", handlerDefault.httpClient.Timeout)
+	}
+}
